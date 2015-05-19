@@ -139,7 +139,8 @@ $(document).ready(function() {
         hoverFillOpacity: 0.1,
         staticFillColor: "orange",
         staticFillOpacity: 0.2,
-        fadeTime: 600
+        fadeTime: 600,
+        enableClose: true
     });
     
     var headerMap = $('header').interactiveMap({

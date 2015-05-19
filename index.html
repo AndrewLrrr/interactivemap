@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>InteractiveMap</title>
+    <style>
+        #cars {
+            position: relative;
+            width: 1000px;
+            height: 313px;
+            margin: 25px auto;
+            padding-bottom: 20px;
+        }
+    </style>
+    <script type="text/javascript" src="demo/js/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="jquery.interactivemap.js"></script>
+</head>
+<body>
+    <div id="cars">
+        <img src="demo/img/cars.jpg" alt="cars">
+    </div>
+    <script type="text/javascript">
+
+        var carsCoordsObj = {
+            "lambo" : "393, 119, 583, 283",
+            "ferrari" : "598, 115, 785, 220",
+            "aston" : "195, 115, 382, 220",
+            "lamboR" : "810, 107, 989, 200",
+            "lamboL" : "7, 107, 186, 200"
+        };
+        var carsDataObj = {
+            "lambo" : "Lamborghini Murcielago",
+            "ferrari" : "Ferrari 612 Scaglietti",
+            "aston" : "Aston Martin Vantage Roadstererate",
+            "lamboR" : "Lamborghini Murcielago LP640",
+            "lamboL" : "Lamborghini Gallardo Spyder"
+        };
+        var carsSettingsObj = {
+            "activeItem" : "lambo",
+            "activeItemSort" : "last"
+        };
+
+        var carsMap = $('#cars').interactiveMap({
+            coordsObj: carsCoordsObj,
+            dataObj: carsDataObj,
+            showOptionsObj: carsSettingsObj,
+            strokeWidth: 2,
+            fillOpacity: 0.2,
+            hoverFillOpacity: 0.4,
+            staticFillOpacity: 0.3,
+            fadeTime: 1000,
+            setQueue: true,
+            setPause: false,
+            enableClose: true,
+            onClick: function() {
+                var val = $(this).data("value");
+                console.log("This item value is " + val);
+            },
+            onMouseOver: function() {
+                var id = $(this).attr("id");
+                console.log("Mouse over on item id " + id);
+            },
+            onMouseOut: function() {
+                var id = $(this).attr("id");
+                console.log("Mouse out of item id " + id);
+            },
+            onRender: function() {
+                console.log("Items have been rendered");
+            },
+            onRemove: function() {
+                console.log("Items have been removed");
+            },
+            onClose: function() {
+                console.log("Item Close");
+            }
+        });
+
+        carsMap.createItems();
+    </script>
+</body>
+</html>
