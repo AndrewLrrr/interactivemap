@@ -9,11 +9,11 @@ $(document).ready(function() {
     var imgDataDuration = 500;
     
     var carsCoordsObj = {
-        "lambo" : "393, 119, 583, 283",
-        "ferrari" : "598, 115, 785, 220",
-        "aston" : "195, 115, 382, 220",
-        "lamboR" : "810, 107, 989, 200",
-        "lamboL" : "7, 107, 186, 200"
+        "lambo" : "390, 119, 589, 283",
+        "ferrari" : "600, 110, 795, 240",
+        "aston" : "200, 110, 378, 240",
+        "lamboR" : "808, 103, 995, 209",
+        "lamboL" : "5, 103, 192, 209"
     };
     var carsDataObj = {
         "lambo" : "<strong>Lamborghini Murcielago</strong> is a sports car produced by Italian automaker Lamborghini between 2001 and 2010. The Murcielago was first available in North America for the 2002 model year. The automaker's first new design in eleven years, the car was also the brand's first new model under the ownership of German parent company Audi, which is owned by Volkswagen. The car has V12 engine capacity of 580 PS (572 hp) which allows accelerate the car to 100 km/h (62 mph) in 3.8 seconds",   
@@ -28,10 +28,10 @@ $(document).ready(function() {
     };
 
     var headerCoordsJSON = '{' +
-        '"item1" :' + '{ "top": "49px", "left": "26px", "height" : "25px", "width" : "25px" }, ' +
-        '"item3" :' + '{ "top": "52px", "left": "910px", "height" : "82px", "width" : "59px" }, ' +
-        '"item2" :' + '{ "top": "49px", "left": "395px", "height" : "25px", "width" : "25px" }, ' +
-        '"item4" :' + '{ "top": "50px", "left": "538px", "height" : "87px", "width" : "80px" } ' +
+        '"item1" :' + '{ "top": "51", "left": "28", "height" : "31", "width" : "31" }, ' +
+        '"item3" :' + '{ "top": "51", "left": "910", "height" : "93", "width" : "63" }, ' +
+        '"item2" :' + '{ "top": "51", "left": "396", "height" : "31", "width" : "31" }, ' +
+        '"item4" :' + '{ "top": "51", "left": "539", "height" : "93", "width" : "86" } ' +
     '}';
     var headerSettingsJSON = '{ ' +
         '"item1" :' + '{ "hoverFillColor" : "blue" },' +
@@ -135,12 +135,14 @@ $(document).ready(function() {
         strokeWidth: 1,
         fillColor: "aqua",
         fillOpacity: 0.1,
-        hoverFillColor: "blue",
+        strokeColor: 'orange',
+        hoverFillColor: "red",
         hoverFillOpacity: 0.1,
-        staticFillColor: "orange",
+        staticFillColor: "indigo",
         staticFillOpacity: 0.2,
         fadeTime: 600,
-        enableClose: true
+        enableClose: true,
+        hideStatic: true
     });
     
     var headerMap = $('header').interactiveMap({
@@ -151,7 +153,7 @@ $(document).ready(function() {
         fillOpacity: 0,
         hoverFillOpacity: 0.5,
         fadeTime: 600,
-        setClick: false,
+        setStatic: false,
         setQueue: true,
         onClick: clickPlusPlus,
         onRender: function() {

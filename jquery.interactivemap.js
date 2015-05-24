@@ -2,11 +2,10 @@
  jQuery.interactiveMap.js
  Copyright (c) 2015 Andrew Larin
  Author: Andrew Larin
- Version: 0.7
+ Version: 0.8
  =============================*/
 //Плагин для реализации вывода активных областей на документе с возможностью задавать цвет, границу и прозрачность фона
-//http://jsfiddle.net/ekinertac/3Evx5/1/
-//Добавить функцию hexToRgba - конвертирующую цвет и прозрачность в rgba формат
+
 (function($) {
 
     'use strict';
@@ -19,6 +18,7 @@
             showOptionsObj: {}, //Опции вывода изображений
             strokeColor: '#ffffff', //Цвет границы
             strokeWidth: 2, //Толщина границы
+            strokeType: 'solid', //Тип границы
             fadeTime: 500, //Время появления
             showBorder: true, //Показывать границу
             fillColor: '#ffffff', //Цвет активных областей
@@ -28,12 +28,14 @@
             staticFillColor: 'green', //Цвет статики
             staticFillOpacity: 0.5, //Прозрачность фона статики
             setStatic: true, //Устанавливать статический фон при нажатии
+            hideStatic: false, //Позволяет удалять статический фон при нажатии
             setQueue: false, //Последовательный вывод элементов
             setPause: false, //Устанавливает паузу равную fadeTime при начале вывода элементов в очереди
             enableClose: false, //Дает возможность удалять элементы вручную
             setStaticClose: true, //Оставляет close кнопку для статического элемента
             onClick: null, //Пользовательское действие на click
             onClose: null, //Пользовательское действие на событие close
+            onStaticClick: null, //Пользовательсткое действие при нажатии по статическому элементу
             onMouseOut: null, //Пользовательское действие на mouseout
             onMouseOver: null, //Пользовательское действие на mouseover
             onRender: null, //Пользовательское действие после рендеринга всех объектов
@@ -42,7 +44,6 @@
 
         settings.position = 'absolute';
         settings.cursor = 'pointer';
-        settings.strokeType = 'solid';
         settings.zIndex = 8000; //Z-index активных областей
         settings.hoverZIndex = 6000; //Z-index активных областей при наведении
         settings.borderZIndex = 7000; //Z-index элементов границы областей при наведении
@@ -52,6 +53,7 @@
         settings.itemBorderName = 'active_border'; //Класс определяющий границы элементов
         settings.itemStaticName = 'active_static_hover'; //Класс выделеных элементов
         settings.itemHoverName = 'active_hover'; //Класс фона при наведении
+        settings.itemCloseName = 'active_close'; //Класс закрывающего элемента
         settings.closeSize = 22; //Размер close кнопки
 
         var _el = $(this); //Основной элемент привязки плагина
@@ -59,7 +61,7 @@
         var _itemsScope = []; //Массив хранит сгенерированные объекты карты
         var _renderObj = {}; //Объект содержит методы ренеринга элементов карты
         var _itemsShowed = false; //Флаг для ограничения провторного вывода изображений в FireFox
-        var _anchor = null; //Флаг активного элемента
+        var _anchor = null; //Флаг активного элемента, нужен для того, чтобы избежать наложения фона элементов
         var _anchorClose = false; //Флаг наведения на контейнер кнопки close
 
         //Объект элемента карты
@@ -77,7 +79,7 @@
             this.height = opt.height;
             this.zIndex = opt.zIndex;
             this.display = opt.display;
-            this.border = settings.strokeWidth + 'px ' + settings.strokeType + ' ' + settings.strokeColor;
+            this.border = opt.border;
 
             this.fillColor = opt.fillColor;
             this.fillOpacity = opt.fillOpacity;
@@ -87,12 +89,93 @@
             this.staticFillOpacity = opt.staticFillOpacity;
 
             this.isActive = opt.isActive;
+        };
 
-            //Перенести на прототипы (м.б.)?
-            this.click = (opt.click) ? opt.click : null;
-            this.mouseover = (opt.mouseover) ? opt.mouseover : null;
-            this.mouseout = (opt.mouseout) ? opt.mouseout : null;
-		};
+        //При включенной опции hideStatic удаляет static-DIV
+        MapObject.prototype.staticClick = function(event) {
+
+            if($.isFunction(settings.onStaticClick)) {
+                settings.onStaticClick.call(this);
+            }
+
+            if(!settings.hideStatic) {
+                return false;
+            }
+
+            var objId = $(this).data("id");
+
+            _anchor = null;
+
+            methods.removeOne.call(this, settings.itemStaticName);
+        };
+
+        //Генерирует новый static-DIV, проверяет на наличие других static-DIV и удаляет дубли
+        MapObject.prototype.click = function(event) {
+
+            if($.isFunction(settings.onClick)) {
+                settings.onClick.call(this);
+            }
+
+            if(!settings.setStatic) {
+                return false;
+            }
+
+            var objId = $(this).attr("id");
+
+            //Ищем уже созданный static-DIV внутри заданного элемента
+            var staticFill = _el.find("." + settings.itemStaticName);
+
+            if(staticFill.length > 0) {
+                var staticId = staticFill.data("id");
+                _setOpacity(staticId, settings.fillOpacity, objId, "0", methods.removeOne.bind(this, settings.itemStaticName));
+            }
+
+            var render = _searchAndRenderObj(objId, "static");
+
+            if(render) {
+                _showOne(settings.itemStaticName, 0, _setOpacity.bind(this, objId, "0", objId));
+            }
+
+            methods.removeOne(settings.itemHoverName);
+        };
+
+        //Генерирует новый hover-DIV
+        MapObject.prototype.mouseover = function(event) {
+            var objId = $(this).attr("id");
+
+            if($.isFunction(settings.onMouseOver)) {
+                settings.onMouseOver.call(this);
+            }
+
+            var render = _searchAndRenderObj(objId, "hover");
+
+            if(render && _anchorClose !== objId) {
+                _showOne(settings.itemHoverName, 0, _setOpacity.bind(this, objId, "0", false));
+            }
+
+            if(_close !== null) {
+                _anchorClose = false;
+            }
+        };
+
+        //Удаляет hover-DIV
+        MapObject.prototype.mouseout = function(event) {
+            var objId = $(this).attr("id");
+
+            if($.isFunction(settings.onMouseOut)) {
+                settings.onMouseOut.call(this);
+            }
+
+            if(_close !== null) {
+                if($("." + settings.itemCloseName + "." + objId + ":hover").length > 0) {
+                    _anchorClose = objId;
+                }
+            }
+
+            if(_anchorClose !== objId) {
+                _setOpacity(objId, settings.fillOpacity, false, "0", methods.removeOne.call(this, settings.itemHoverName));
+            }
+        };
 
         //Объект close элемента
         var CloseMapObject = function(opt) {
@@ -104,7 +187,8 @@
             this.content = '&times;';
         };
 
-        CloseMapObject.prototype.click = function() {
+        //Удаляет все элементы связанные с close-кнопкой через ее класс
+        CloseMapObject.prototype.click = function(event) {
 
             var objId = $(this).data("id");
 
@@ -115,6 +199,24 @@
             _anchorClose = false;
 
             methods.removeOne(objId);
+        };
+
+        //Проверяет остался ли существовать hover-div после того как курсор покунул элемент, если да, то удаляет его
+        CloseMapObject.prototype.mouseout = function(event) {
+
+            var objId = $(this).data("id");
+
+            if($(this).hasClass(settings.itemStaticName) || $("." + settings.itemHoverName + "." + objId + ":hover").length > 0) {
+                return false;
+            }
+
+            if($.isFunction(settings.onMouseOut)) {
+                settings.onMouseOut.call($("#" + objId));
+            }
+
+            _anchorClose = false;
+
+            _setOpacity(objId, settings.fillOpacity, false, "0", methods.removeOne.bind(this, settings.itemHoverName));
         };
 
         //Генерирует объект по заданым параметрам
@@ -128,7 +230,12 @@
             if(typeof coords === "object") {
                 $.each(coords, function(coordName, coordVal) {
                     if(enableCoords.indexOf(coordName) > -1) {
-                        optObj[coordName] = coordVal;
+                        if(coordName == "width" || coordName == "height") {
+                            optObj[coordName] = parseFloat(coordVal) - (settings.strokeWidth * 2) + 'px';
+                        }
+                        else {
+                            optObj[coordName] = parseFloat(coordVal) + 'px';
+                        }
                     }
                     else {
                         throw "Property " + coordName + " isn't allow for plugin";
@@ -140,12 +247,11 @@
                 var x1 = coordsArr[0], y1 = coordsArr[1], x2 = coordsArr[2], y2 = coordsArr[3];
 
                 //Выставляем координаты с поправками на границы элементов
-                optObj.top = parseFloat(y1) + settings.strokeWidth + 'px';
-                optObj.left = parseFloat(x1) + settings.strokeWidth + 'px';
+                optObj.top = parseFloat(y1) + 'px';
+                optObj.left = parseFloat(x1) + 'px';
                 optObj.width = parseFloat((x2 - x1)) - (settings.strokeWidth * 2) + 'px';
                 optObj.height = parseFloat((y2 - y1)) - (settings.strokeWidth * 2) + 'px';
             }
-
 
             if(parseFloat(optObj.width) <= 0) {
                 throw "Incorrect parameters for width calculation - " + name;
@@ -169,6 +275,7 @@
             optObj.staticFillColor = settings.staticFillColor;
             optObj.staticFillOpacity = settings.staticFillOpacity;
 
+            optObj.border = parseFloat(settings.strokeWidth) + 'px ' + settings.strokeType + ' ' + settings.strokeColor;
 
             //Если установлены дополнительные настройки вывода элементов, то перезаписываем их
             if (settings.showOptionsObj.hasOwnProperty(name)) {
@@ -188,88 +295,13 @@
                 optObj.fillOpacity = 0;
             }
 
-            if(!$.isEmptyObject(actions)) {
+            if(typeof actions !== "undefined" && !$.isEmptyObject(actions)) {
                 $.each(actions, function(name, fn) {
                     optObj[name] = fn;
                 });
             }
 
             return new MapObject(optObj);
-        };
-
-        //Генерирует новый static-DIV, проверяет на наличие других static-DIV и удаляет дубли
-        var _onClick = function(event) {
-
-            if($.isFunction(settings.onClick)) {
-                settings.onClick.call(this);
-            }
-
-            if(!settings.setStatic) {
-                return false;
-            }
-
-            var objId = $(this).attr("id");
-            
-            //Ищем уже созданный static-DIV внутри заданного элемента
-            var staticFill = _el.find("." + settings.itemStaticName);
-
-            if(staticFill.length > 0) {
-                var staticId = staticFill.data("id");
-                _setOpacity(staticId, settings.fillOpacity, objId, "0", methods.removeOne.bind(this, settings.itemStaticName));
-            }
-
-            var render = _searchAndRenderObj(objId, "static");
-
-            if(render) {
-                _showOne(settings.itemStaticName, 0, _setOpacity.bind(this, objId, "0", objId));
-            }
-
-            methods.removeOne(settings.itemHoverName);
-        };
-
-        //Генерирует новый hover-DIV
-        var _mouseOver = function(event) {
-            var objId = $(this).attr("id");
-
-            if($.isFunction(settings.onMouseOver)) {
-                settings.onMouseOver.call(this);
-            }
-
-            var render = _searchAndRenderObj(objId, "hover");
-
-            if(render && !_anchorClose) {
-                _showOne(settings.itemHoverName, 0, _setOpacity.bind(this, objId, "0", false));
-            }
-
-            _anchorClose = false;
-        };
-
-        //Удаляет hover-DIV
-        var _mouseOut = function(event) {
-            var objId = $(this).attr("id");
-
-            if($.isFunction(settings.onMouseOut)) {
-                settings.onMouseOut.call(this);
-            }
-
-            if(_close !== null) {
-                if ($(_close).is(':hover')) {
-                    _anchorClose = true;
-                }
-            }
-
-            if(!_anchorClose) {
-                _setOpacity(objId, settings.fillOpacity, false, "0", methods.removeOne.bind(this, settings.itemHoverName));
-            }
-        };
-
-        //Возвращает объект пользовательских функций элементов карты
-        var _itemsActions = function() {
-            return {
-                click: _onClick,
-                mouseover: _mouseOver,
-                mouseout: _mouseOut
-            }
         };
 
         //Проверяет основной элемент плагина на наличие изображения
@@ -309,7 +341,7 @@
                     count++;
                 });
             }
-            
+
             if($.isFunction(settings.onRender)) {
                 $.when.apply(this, promises).done(settings.onRender);
             }
@@ -317,7 +349,7 @@
 
         //Показывает сгенерированный DIV в соответствии с параметром fadeTime
         var _showByOne = function(id, time, count) {
-            
+
             var self = null;
 
             var dfd = new $.Deferred();
@@ -554,6 +586,8 @@
                     this.defaultStyle.opacity = this.item.staticFillOpacity;
 
                     $(this.newItem).attr("data-id", this.item.id);
+
+                    $(this.newItem).bind("click", this.item.staticClick);
                 },
 
                 //Генерируем кнопку закрыть
@@ -569,7 +603,7 @@
 
                     _close = document.createElement('DIV');
 
-                    _close.className = this.newItem.className;
+                    _close.className = this.newItem.className + " " + settings.itemCloseName;
 
                     var closeButtonStyle = {
                         top: closeObj.top,
@@ -583,6 +617,7 @@
                         height: settings.closeSize + "px",
                         width: settings.closeSize + "px",
                         fontSize: settings.closeSize + "px",
+                        fontFamily: "serif",
                         fontWeight: "bold"
                     };
 
@@ -591,6 +626,7 @@
                     $(_close).css(closeButtonStyle);
 
                     $(_close).bind("click", closeObj.click);
+                    $(_close).bind("mouseout", closeObj.mouseout);
 
                     _el.append(_close);
                 }
@@ -618,7 +654,7 @@
 
                     var data = (settings.dataObj.hasOwnProperty(key)) ? settings.dataObj[key] : "";
 
-                    _itemsScope.push(_createObject(key, coords, data, _itemsActions()));
+                    _itemsScope.push(_createObject(key, coords, data));
                 });
 
                 //Если нет необходимости выводить границы, то выставляем этот параметр в 0
@@ -695,7 +731,7 @@
 
                     var data = (dataObj.hasOwnProperty(key)) ? dataObj[key] : "";
 
-                    var itemObject = _createObject(key, coords, data, _itemsActions());
+                    var itemObject = _createObject(key, coords, data);
 
                     _itemsScope.push(itemObject);
 
