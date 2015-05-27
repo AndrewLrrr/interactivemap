@@ -2,7 +2,7 @@
  jQuery.interactiveMap.js
  Copyright (c) 2015 Andrew Larin
  Author: Andrew Larin
- Version: 0.8
+ Version: 0.9
  =============================*/
 //Плагин для реализации вывода активных областей на документе с возможностью задавать цвет, границу и прозрачность фона
 
@@ -54,6 +54,7 @@
         settings.itemStaticName = 'active_static_hover'; //Класс выделеных элементов
         settings.itemHoverName = 'active_hover'; //Класс фона при наведении
         settings.itemCloseName = 'active_close'; //Класс закрывающего элемента
+        settings.imageWrapperName = 'interactivemap_wrapper'; //Класс контейнера-оболочки для изображений
         settings.closeSize = 22; //Размер close кнопки
 
         var _el = $(this); //Основной элемент привязки плагина
@@ -306,13 +307,39 @@
 
         //Проверяет основной элемент плагина на наличие изображения
         var _checkImg = function() {
-            var img = $(_el).find("img");
+            var isImg = $(_el).is("img");
 
-            if(img.length > 0) {
-                return img;
+            if(isImg) {
+                return true;
             }
 
             return false;
+        };
+
+        var _wrapImg = function() {
+
+            var wrapper = document.createElement('DIV');
+
+            var parent = _el.parent();
+
+            wrapper.className = settings.imageWrapperName + " " + Math.round(Math.random() * 100000);
+
+            var imgWidth = _el.width();
+            var imgHeight = _el.height();
+
+            var wrapperStyle = {
+                position : "relative",
+                width : imgWidth + "px",
+                height : imgHeight + "px"
+            }
+
+            $(wrapper).css(wrapperStyle);
+
+            parent.append(wrapper);
+
+            $(wrapper).append(_el);
+
+            return $(wrapper);
         };
 
         //Если задан параметр fadeTime, то выводит элементы карты с задержкой
@@ -674,11 +701,14 @@
                 //Если изображение есть, то ждем пока оно загрузится, в противном случае, грузим сгенерированные DIV сразу
                 if (_img) {
                     //Добавляем к изображению рандомный параметр, чтобы сработало load в IE
-                    var image = $(_img).attr("src", function(i, val) {
+                    var image = _el.attr("src", function(i, val) {
                         return val + "?" + new Date().getTime();
                     });
                     $(image).bind({
                         load: function () {
+
+                            //Оборачиваем изображение в div-контейнер
+                            _el = _wrapImg();
 
                             //Запрещаем повторный вызов для FF29
                             if(_itemsShowed) {
@@ -697,6 +727,7 @@
                     });
                 }
                 else {
+
                     var render = _renderItems();
 
                     if (render) {

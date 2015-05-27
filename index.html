@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <title>InteractiveMap</title>
     <style>
+        body {
+            text-align: center;
+        }
+        .interactivemap_wrapper {
+            margin: auto;
+        }
         #cars {
             position: relative;
             width: 1000px;
@@ -12,13 +18,14 @@
             padding-bottom: 20px;
         }
     </style>
-    <script type="text/javascript" src="demo/js/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="jquery-1.11.2.min.js"></script>
     <script type="text/javascript" src="jquery.interactivemap.js"></script>
 </head>
 <body>
     <div id="cars">
-        <img src="demo/img/cars.jpg" alt="cars">
+        <img src="cars.jpg" alt="cars">
     </div>
+    <img src="cars.jpg" alt="cars">
     <script type="text/javascript">
 
         var carsCoordsObj = {
@@ -40,7 +47,7 @@
             "activeItemSort" : "last"
         };
 
-        var carsMap = $('#cars').interactiveMap({
+        var carsMap = $('body > img').interactiveMap({
             coordsObj: carsCoordsObj,
             dataObj: carsDataObj,
             showOptionsObj: carsSettingsObj,
