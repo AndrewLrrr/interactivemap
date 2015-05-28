@@ -315,7 +315,8 @@
 
             return false;
         };
-
+        
+        //Оборачивает изображение в контейнер в котором будут размещаться элементы карты
         var _wrapImg = function() {
 
             var wrapper = document.createElement('DIV');
