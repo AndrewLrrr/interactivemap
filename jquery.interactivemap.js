@@ -332,7 +332,7 @@
                 position : "relative",
                 width : imgWidth + "px",
                 height : imgHeight + "px"
-            }
+            };
 
             $(wrapper).css(wrapperStyle);
 
