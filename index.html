@@ -47,7 +47,20 @@
             "activeItemSort" : "last"
         };
 
-        var carsMap = $('body > img').interactiveMap({
+        var carsDataObj2 = {
+            "lambo" : "Lamborghini",
+            "ferrari" : "Ferrari 612",
+            "aston" : "Aston Martin Vantage",
+            "lamboR" : "Lamborghini LP640",
+            "lamboL" : "Lamborghini Spyder"
+        };
+        var carsSettingsObj2 = {
+            "activeItem" : "aston",
+            "activeItemSort" : "first",
+            "lambo" : { "staticFillColor" : "blue" }
+        };
+
+        var pluginOptions = {
             coordsObj: carsCoordsObj,
             dataObj: carsDataObj,
             showOptionsObj: carsSettingsObj,
@@ -83,9 +96,18 @@
             onStaticClick: function() {
                 console.log("You click by static element");
             }
-        });
+        };
 
-        carsMap.createItems();
+        var carsDivMap = $('#cars').interactiveMap(pluginOptions);
+
+        var carsMap = $('body > img').interactiveMap(pluginOptions);
+
+        setTimeout( function() {
+            carsMap.removeItems();
+            carsMap.createItems(carsCoordsObj, carsDataObj2, carsSettingsObj2);
+        }, 15000 );
+
+        //carsMap.createItems();
     </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
  jQuery.interactiveMap.js
  Copyright (c) 2015 Andrew Larin
  Author: Andrew Larin
- Version: 0.9
+ Version: 0.11
  =============================*/
 //Плагин для реализации вывода активных областей на документе с возможностью задавать цвет, границу и прозрачность фона
 
@@ -10,7 +10,7 @@
 
     'use strict';
 
-    $.fn.interactiveMap = function(options) {
+    $.interactiveMap = function(options) {
 
         var settings = $.extend({
             coordsObj: {}, //Координаты объектов
@@ -665,25 +665,8 @@
 
         var methods = {
 
-            //Точка входа, генерирует объекты карты
-            createItems: function () {
-
-                settings.coordsObj = _createDataObj(settings.coordsObj, "coordsObj");
-                settings.dataObj = _createDataObj(settings.dataObj, "dataObj");
-                settings.showOptionsObj = _createDataObj(settings.showOptionsObj, "showOptionsObj");
-
-                if (!settings.coordsObj || !settings.dataObj || !settings.showOptionsObj) {
-                    return false;
-                }
-
-                $.each(settings.coordsObj, function (key, coords) {
-
-                    settings.zIndex++;
-
-                    var data = (settings.dataObj.hasOwnProperty(key)) ? settings.dataObj[key] : "";
-
-                    _itemsScope.push(_createObject(key, coords, data));
-                });
+            //Точка входа, определяет к какому элеленту был привязан плагин и генерирует элементы карты
+            initPlugin: function() {
 
                 //Если нет необходимости выводить границы, то выставляем этот параметр в 0
                 if(!settings.showBorder) {
@@ -692,9 +675,6 @@
 
                 //Устанавливаем объекту _renderObj основные методы ренедеринга
                 _renderObj = _renderMethods();
-
-                //Сортируем массив по заданным параметрам
-                _sortItems();
 
                 //Проверяем на наличие изображения внутри контейнера
                 var _img = _checkImg();
@@ -711,16 +691,8 @@
                             //Оборачиваем изображение в div-контейнер
                             _el = _wrapImg();
 
-                            //Запрещаем повторный вызов для FF29
-                            if(_itemsShowed) {
-                                return false;
-                            }
-
-                            var render = _renderItems();
-
-                            if (render) {
-                                _showItems();
-                            }
+                            //Генерируем объекты элементов карты
+                            methods.createItems();
                         },
                         error: function () {
                             throw "Image wasn't loaded";
@@ -729,52 +701,45 @@
                 }
                 else {
 
-                    var render = _renderItems();
-
-                    if (render) {
-                        _showItems();
-                    }
+                    //Генерируем объекты элементов карты
+                    methods.createItems();
                 }
+
+                return methods;
             },
 
-            //Генерирует один активный объект карты
-            createOne: function (coords, data, showOpt) {
+            //Генерирует объекты карты
+            createItems: function (coords, data, options) {
 
-                var coordsObj = {}, dataObj = {}, settingsObj = {};
+                var coordsObj = (typeof coords !== "undefined") ? coords : settings.coordsObj;
+                var dataObj = (typeof data !== "undefined") ? data : settings.dataObj;
+                var showOptionsObj = (typeof options !== "undefined") ? options : settings.showOptionsObj;
 
-                coordsObj = _createDataObj(coords, "coords");
-                dataObj = _createDataObj(data, "data");
-                settingsObj = _createDataObj(showOpt, "showOpt");
+                settings.coordsObj = _createDataObj(coordsObj, "coordsObj");
+                settings.dataObj = _createDataObj(dataObj, "dataObj");
+                settings.showOptionsObj = _createDataObj(showOptionsObj, "showOptionsObj");
 
-                if (!coordsObj || !dataObj || !settingsObj) {
+                if (!settings.coordsObj || !settings.dataObj || !settings.showOptionsObj) {
                     return false;
                 }
 
-                //Ограничиваем цикл одной итерацией
-                var checkLoop = 0;
-
-                $.each(coordsObj, function (key, coords) {
-
-                    if (checkLoop >= 1) {
-                        return false;
-                    }
+                $.each(settings.coordsObj, function (key, coords) {
 
                     settings.zIndex++;
 
-                    var data = (dataObj.hasOwnProperty(key)) ? dataObj[key] : "";
+                    var data = (settings.dataObj.hasOwnProperty(key)) ? settings.dataObj[key] : "";
 
-                    var itemObject = _createObject(key, coords, data);
-
-                    _itemsScope.push(itemObject);
-
-                    var render = _renderOne(itemObject);
-
-                    if (render) {
-                        _showOne(itemObject.id, settings.fadeTime);
-                    }
-
-                    checkLoop++;
+                    _itemsScope.push(_createObject(key, coords, data));
                 });
+
+                //Сортируем массив по заданным параметрам
+                _sortItems();
+
+                var render = _renderItems();
+
+                if (render) {
+                    _showItems();
+                }
             },
 
             //Удаляет все элементы
@@ -798,6 +763,24 @@
         };
 
         return methods;
+    };
+
+    $.fn.interactiveMap = function(options) {
+
+        options = options || {};
+
+        if(typeof options === "object") {
+            var interactiveMap = $.interactiveMap.call(this, options);
+            if(typeof interactiveMap === "object") {
+                return interactiveMap.initPlugin.call(this);
+            }
+            else {
+                $.error('Unknown error occurred during initialization process');
+            }
+        }
+        else {
+            $.error('Wrong options format');
+        }
     }
 
 }(jQuery));
