@@ -60,6 +60,7 @@ onRender - Callback function called when active regions render
 onRemove - Callback function called when active regions remove
 
 5. API-methods:
-createItems (coords, data, options) - Takes a Object or JSON of coordinates, information and additional options for active regions and displays them on the screen.
-removeItems () - Removes all active regions
-removeOne (className) - Removes the active region by the name of the class
+CreateItems() - Creates a visible objects of map after plugin initialization
+createOne(coords, data, options) - Takes a Object or JSON of coordinates, information and additional options for active regions and displays them on the screen.
+removeItems() - Removes all active regions
+removeOne(className) - Removes the active region by the name of the class
