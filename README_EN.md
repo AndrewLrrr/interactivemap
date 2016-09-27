@@ -11,7 +11,11 @@ web-server-side applications and realize the dynamic addition of elements.
 - Ample opportunities to configure the active regions;
 - Support for user-defined functions.
 
-3. Basic use:
+3. Demo:
+http://larin-dev.ru/projects/interactive-map/
+http://larin-dev.ru/projects/railwagon/
+
+4. Basic use:
 The plug-in can be applied to any block elements and images on the page.
 If the item is not an image in order to plug-in correctly identified the location of the active regions, the element for which it is invoked is to have a relative position.
 If the item is an image, the output of the active regions occur immediately after loading the image.
@@ -25,7 +29,7 @@ $ ("# YourId").interactiveMap({
    onClick: someFunction
 });
 
-4. Options:
+5. Options:
 coordsObj - Object or JSON containing coordinates elements. The coordinates can be specified in CSS-form, using {top: 100, left: 100, width: 100, height: 100}, and the form of coordinates points {x1, y1, x2, y2}
 dataObj - Object or JSON containing the data of elements. To these were tied in the correct order, the keys dataObj must fully comply with keys coordsObj
 showOptionsObj - Object or JSON containing additional options for active regions. It may contain the following keys:
@@ -59,7 +63,7 @@ onMouseOver - Callback function called when active region mouse on
 onRender - Callback function called when active regions render
 onRemove - Callback function called when active regions remove
 
-5. API-methods:
+6. API-methods:
 CreateItems() - Creates a visible objects of map after plugin initialization
 createOne(coords, data, options) - Takes a Object or JSON of coordinates, information and additional options for active regions and displays them on the screen.
 removeItems() - Removes all active regions
